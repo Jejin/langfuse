@@ -62,6 +62,8 @@ services:
       REDIS_TLS_CA: ${REDIS_TLS_CA:-/certs/ca.crt}
       REDIS_TLS_CERT: ${REDIS_TLS_CERT:-/certs/redis.crt}
       REDIS_TLS_KEY: ${REDIS_TLS_KEY:-/certs/redis.key}
+    networks:
+      - evija-net
 
   langfuse-web:
     image: langfuse/langfuse:3
@@ -82,6 +84,8 @@ services:
       LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:-}
       LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME:-}
       LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-}
+    networks:
+      - evija-net
 
   clickhouse:
     image: clickhouse/clickhouse-server
@@ -92,8 +96,8 @@ services:
       CLICKHOUSE_USER: clickhouse
       CLICKHOUSE_PASSWORD: clickhouse # CHANGEME
     volumes:
-      - langfuse_clickhouse_data:/var/lib/clickhouse
-      - langfuse_clickhouse_logs:/var/log/clickhouse-server
+      - kontainer-data:/var/lib/clickhouse
+      - kontainer-data:/var/log/clickhouse-server
     ports:
       - 127.0.0.1:8123:8123
       - 127.0.0.1:9000:9000
@@ -103,6 +107,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 1s
+    networks:
+      - evija-net
 
   minio:
     image: minio/minio
@@ -117,13 +123,15 @@ services:
       - 9090:9000
       - 127.0.0.1:9091:9001
     volumes:
-      - langfuse_minio_data:/data
+      - kontainer-data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 1s
       timeout: 5s
       retries: 5
       start_period: 1s
+    networks:
+      - evija-net
 
   redis:
     image: redis:7
@@ -138,6 +146,8 @@ services:
       interval: 3s
       timeout: 10s
       retries: 10
+    networks:
+      - evija-net
 
   postgres:
     image: postgres:${POSTGRES_VERSION:-latest}
@@ -154,14 +164,14 @@ services:
     ports:
       - 127.0.0.1:5432:5432
     volumes:
-      - langfuse_postgres_data:/var/lib/postgresql/data
+      - kontainer-data:/var/lib/postgresql/data
+    networks:
+      - evija-net
 
 volumes:
-  langfuse_postgres_data:
-    driver: local
-  langfuse_clickhouse_data:
-    driver: local
-  langfuse_clickhouse_logs:
-    driver: local
-  langfuse_minio_data:
-    driver: local
+  kontainer-data:
+    external: true
+
+networks:
+  evija-net:
+    external: true
